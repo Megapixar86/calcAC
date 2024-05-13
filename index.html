@@ -1,0 +1,221 @@
+﻿<html>
+<head>
+<!--HTA:APPLICATION
+        BORDER="thin"
+		MAXIMIZEBUTTON="no"
+        MINIMIZEBUTTON="no"
+        BORDERSTYLE="normal"
+        CAPTION="yes"
+        SHOWINTASKBAR="no"
+        SINGLEINSTANCE="no"
+        SYSMENU="yes"
+		RESIZABLE="no"
+ /-->
+   <style type="text/css">
+   body{
+		width: 300px;
+		background-color:#E0E4EF;
+		height: 120px;
+		font-weight:600;
+	}
+	.block1 {
+		width: 300px;
+		background-color:#E0E4EF;
+		height: 60px;
+		font-size: 10pt;
+		font-weight:200;
+	}
+	.block2 {
+		width: 300px;
+		background-color:#E0E4EF;
+		height: 60px;
+		font-size: 10pt;
+		font-weight:200;
+	}		
+	.button  {
+		width:320px;
+		padding:1px;
+		}
+   </style> 
+   <script language="javascript">
+	//установить размеры окна
+	window.resizeTo(400, 700)
+	window.moveTo(screen.width - 400, 0)
+	
+	//извлечь значение элемента по ID
+	function el(id){
+		return document.getElementById(id)
+	}
+	//извлечь значение первого элемента по имени
+	function enm(name){
+		return document.getElementsByName(name)[0]
+	}
+	
+	// получить значения удельного сопротивления, индуктивного сопротивления и сечения кабеля
+	function resRXS(){
+		// удельное сопротивление 
+		if (enm("mat_arg").value === "CU"){
+			r= 0.0183
+		}else{
+			r = 0.03
+		}
+		// удельное индуктивное сопротивление и сечение 
+		switch(el('Sec').value){
+			case "50":
+				sz = 0
+				S=0.5
+				break
+			case "75":
+				sz = 0
+				S = 0.75
+				break
+			case "100":
+				sz = 0
+				S = 1.0
+				break
+			case "150":
+				sz = 0.126
+				S = 1.5
+				break
+			case "250":
+				sz = 0.116
+				S = 2.5
+				break
+			case "400":
+				sz = 0.095
+				S = 4.0
+				break
+			case "600":
+				sz = 0.09
+				S = 6.0
+				break
+			case "1000":
+				sz = 0.073
+				S = 10.0
+				break
+			}
+	}
+	
+	//расчет напряжения
+	function resU(){
+		resRXS()
+		// длинна линии
+		L = +enm("L_arg").value
+		// напряжение номинальное
+		U = +enm("U_arg").value
+		// напряжение источника
+		E = +enm("E_arg").value
+		// мощность нагрузки
+		Pn = +enm("Pn_arg").value
+		// косинус
+		cosw = +enm("cos_arg").value
+		// синус
+		sinw = Math.sin(-Math.atan(cosw/Math.sqrt(-cosw*cosw+1))+1.5708)
+		// проверяет 1 или 3 фазы и считаем напряжение
+		if(enm("opt").checked){
+			I = Pn / (U * cosw)
+			Un = E - 2 * L * I * ( (r / S) * cosw + (sz*sinw)/1000)
+		}
+		else{
+			I = Pn / (Math.sqrt(3) * U * cosw)
+			Un = E - Math.sqrt(3) * L * I * ( (r / S) * cosw + (sz*sinw)/1000)
+		}
+		// присваимаем напряжение 
+        enm("Un_arg").value = Un.toFixed(1)
+	}
+	
+	//расчет длинны линии
+	function resL(){
+		resRXS()
+		// напряжение в нагрузке
+		Un = +enm("Un_arg").value
+		// напряжение номинальное
+		U = +enm("U_arg").value
+		// напряжение источника
+		E = +enm("E_arg").value
+		// мощность нагрузки
+		Pn = +enm("Pn_arg").value
+		// косинус
+		cosw = +enm("cos_arg").value
+		// синус
+		sinw = Math.sin(-Math.atan(cosw/Math.sqrt(-cosw*cosw+1))+1.5708)
+		// проверяет 1 или 3 фазы и считаем напряжение
+		if(enm("opt").checked){
+			I = Pn / (U * cosw)
+			L = (E-Un)/(2* I * ((r/S)*cosw + (sz*sinw/1000)))
+		}
+		else{
+			I = Pn / (Math.sqrt(3) * U * cosw)
+			L = (E-Un)/(Math.sqrt(3)* I * ((r/S)*cosw + (sz*sinw/1000)))
+		}
+		// присваиваем длинну
+		enm("L_arg").value = L.toFixed(1)
+	}
+   </script>
+   
+</head>
+<body >
+	<h2> Калькулятор падения напряжения в линии переменного тока</h2>
+	<table border="1">
+		<tr>
+			<td>Материал кабеля</td>
+			<td><select id="selectID" name = "mat_arg" >
+				<option value = "CU">Медь</option>
+				<option value = "AL">Алюминий</option>
+			</select></td>
+		</tr>
+		<tr>
+			<td>Количество фаз</td>
+			<td><input name="opt" type="radio" checked>1 <input name="opt" type="radio">3 </td>
+		</tr>
+		<tr>
+			<td>Сечение кабеля, мм2</td>
+			<td><select id="Sec" name = "sec_arg" >
+				<option value= "50">0.5</option>
+				<option value="75">0.75</option>
+				<option value="100">1.0</option>
+				<option value="150" selected>1.5</option>
+				<option value="250">2.5</option>
+				<option value="400">4.0</option>
+				<option value="600">6.0</option>
+				<option value="1000">10.0</option>
+			</select></td>
+		</tr>
+		<tr>
+			<td>Длинна линии, м</td>
+			<td><input type="text" value="60" name="L_arg" size="12"></td>
+		</tr>
+		<tr>
+			<td>Номинальное напряжение, В</td>
+			<td><input type="text" value="220" name="U_arg" size="12"></td>
+		</tr>
+		<tr>
+		<tr>
+			<td>Напряжение источника, В</td>
+			<td><input type="text" value="220" name="E_arg" size="12"></td>
+		</tr>
+		<tr>
+			<td>Суммарная мощность потребителей в линии, Вт</td>
+			<td><input type="text" value="310" name="Pn_arg" size="12"></td>
+		</tr>
+		<tr>
+			<td>Коэффициент мощности(cos)</td>
+			<td><input type="text" value="0.95" name="cos_arg" size="12"></td>
+		</tr>
+		<tr>
+			<td>Напряжение в нагрузке на конце линии, В</td>
+			<td><input type="text" name="Un_arg" size="10"></td>
+		</tr>
+	</table>
+	<br>
+	<input type="button" class = "button" value="Рассчитать напряжение в нагрузке" onclick = "resU()"></td>
+	<br>
+	<div class="block1">ВАЖНО! Перед тем как нажать проверьте все значения, кроме "Напряжение в нагрузке на конце линии, В"
+	</div>
+	<input type="button" class = "button" value="Длинна линии" onclick = "resL()"></td>
+	<div class="block2">ВАЖНО! Перед тем как нажать проверьте все значения, кроме "Длинна линии, м"
+	</div>
+	<a><img src="https://luis.ru/local/templates/main_2/images/logo_luis.png" width="100" height="40" border="0" alt="logotip"></a>
+</body>
+
+</html>
